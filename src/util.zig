@@ -1,41 +1,45 @@
 const std = @import("std");
-const Allocator = std.mem.Allocator;
-const List = std.ArrayList;
-const Map = std.AutoHashMap;
-const StrMap = std.StringHashMap;
-const BitSet = std.DynamicBitSet;
-const Str = []const u8;
 
-var gpa_impl = std.heap.GeneralPurposeAllocator(.{}){};
-pub const gpa = &gpa_impl.allocator;
+//Extremely simple, static ring buffer with no heap allocation.
+pub fn RingBuffer(comptime T: type, comptime capacity: usize) type {
+    const RingBufferError = error{IndexOutOfbounds};
 
-// Add utility functions here
+    return struct {
+        const Self = @This();
 
+        index: usize = 0,
+        isFull: bool = false,
+        buffer: [capacity]T = undefined,
 
-// Useful stdlib functions
-const tokenize = std.mem.tokenize;
-const split = std.mem.split;
-const indexOf = std.mem.indexOfScalar;
-const indexOfAny = std.mem.indexOfAny;
-const indexOfStr = std.mem.indexOfPosLinear;
-const lastIndexOf = std.mem.lastIndexOfScalar;
-const lastIndexOfAny = std.mem.lastIndexOfAny;
-const lastIndexOfStr = std.mem.lastIndexOfLinear;
-const trim = std.mem.trim;
-const sliceMin = std.mem.min;
-const sliceMax = std.mem.max;
+        pub fn push(self: *Self, value: T) void {
+            self.buffer[self.index] = value;
 
-const parseInt = std.fmt.parseInt;
-const parseFloat = std.fmt.parseFloat;
+            const newIndex = self.index + 1;
 
-const min = std.math.min;
-const min3 = std.math.min3;
-const max = std.math.max;
-const max3 = std.math.max3;
+            self.index = if (newIndex < capacity) newIndex else 0;
 
-const print = std.debug.print;
-const assert = std.debug.assert;
+            if (newIndex == capacity)
+                self.isFull = true;
+        }
 
-const sort = std.sort.sort;
-const asc = std.sort.asc;
-const desc = std.sort.desc;
+        pub fn get(self: *Self, index: usize) !T {
+            if (index >= 0 and index < capacity) {
+                const internalIndex = try std.math.mod(usize, self.index + index, capacity);
+                return self.buffer[internalIndex];
+            } else {
+                return RingBufferError.IndexOutOfbounds;
+            }
+        }
+    };
+}
+
+pub const SliceOps = struct {
+    pub fn sum(comptime T: type, slice: []T) usize {
+        var s: usize = 0;
+
+        for (slice) |el|
+            s += el;
+
+        return s;
+    }
+};
