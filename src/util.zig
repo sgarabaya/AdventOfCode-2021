@@ -53,3 +53,18 @@ pub fn countScalar(comptime T: type, buffer: []const T, value: T) usize {
 
     return i;
 }
+
+pub fn Pair(comptime Ta: type, comptime Tb: type) type {
+    return struct {
+        const Self = @This();
+        a: Ta,
+        b: Tb,
+
+        pub fn init(a: Ta, b: Tb) Self {
+            return .{
+                .a = a,
+                .b = b,
+            };
+        }
+    };
+}
