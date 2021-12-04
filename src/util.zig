@@ -43,3 +43,13 @@ pub const SliceOps = struct {
         return s;
     }
 };
+
+pub fn countScalar(comptime T: type, buffer: []const T, value: T) usize {
+    var i: usize = 0;
+    for (buffer) |c| {
+        if (c == value)
+            i += 1;
+    }
+
+    return i;
+}
